@@ -110,6 +110,15 @@ def main():
              "Give subprompts more or less weight by encapsulating them in (), and adding a :weight. For example:\n" +
              "'a photograph of (an astronaut:1.1) riding a horse' would give the subprompt 'an astronaut' a 10%% boost."
     )
+    
+    parser.add_argument(
+        "--negative_prompt",
+        type=str,
+        nargs="?",
+        default="",
+        help="the negative prompt to render"
+    )
+    
     parser.add_argument(
         "--outdir",
         type=str,
@@ -272,6 +281,7 @@ def main():
     n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     if not opt.from_file:
         prompt = opt.prompt
+        negative_prompt = opt.negative_prompt
         assert prompt is not None
         data = [batch_size * [prompt]]
 
@@ -299,8 +309,8 @@ def main():
                 for n in trange(opt.n_iter, desc="Sampling"):
                     for prompts in tqdm(data, desc="data"):
                         uc = None
-                        if opt.scale != 1.0:
-                            uc = model.get_learned_conditioning(batch_size * [""])
+                        if negative_prompt:
+                            uc = model.get_learned_conditioning(len(prompts) * [negative_prompt])
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
                         c = torch.cat([get_learned_conditioning_with_prompt_weights(prompt, model)
