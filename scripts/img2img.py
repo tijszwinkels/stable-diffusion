@@ -259,10 +259,13 @@ def main():
                 for n in trange(opt.n_iter, desc="Sampling"):
                     for prompts in tqdm(data, desc="data"):
                         uc = None
-                        if negative_prompt:
-                            uc = model.get_learned_conditioning(len(prompts) * [negative_prompt])
                         if isinstance(prompts, tuple):
                             prompts = list(prompts)
+                        if negative_prompt:
+                            uc = torch.cat([get_learned_conditioning_with_prompt_weights(neg_prompt, model)
+                                            for neg_prompt in (batch_size * [negative_prompt])])
+                        else:
+                            uc = model.get_learned_conditioning(batch_size * [""])
                         c = torch.cat([get_learned_conditioning_with_prompt_weights(prompt, model)
                                        for prompt in prompts])
 
